@@ -8,11 +8,16 @@ use ratatui::widgets::{Block, Borders, HighlightSpacing, List, ListItem, ListSta
 
 use crate::backend;
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 enum Screen{
-    #[default]
     Main {state: ListState},
     Editing {selected_source: usize, state: ListState},
+}
+
+impl Default for Screen {
+    fn default() -> Self {
+        Screen::Main { state: Default::default()}
+    }
 }
 
 #[derive(Debug, Clone, Default)]
@@ -26,7 +31,7 @@ struct App {
 impl App {
     fn run(&mut self, mut terminal: DefaultTerminal) -> Result<()> {
         loop {
-            terminal.draw(|f| f.render_widget(&mut self, f.area()))?;
+            terminal.draw(|f| f.render_widget(&mut *self, f.area()))?;
             match event::read()? {
                 _ => {},
             }
