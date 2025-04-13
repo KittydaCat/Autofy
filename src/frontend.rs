@@ -10,13 +10,13 @@ use crate::backend;
 
 #[derive(Debug, Clone)]
 enum Screen{
-    Main {state: ListState},
-    Editing {selected_source: usize, state: ListState},
+    Main,
+    Editing {source_list_state: ListState},
 }
 
 impl Default for Screen {
     fn default() -> Self {
-        Screen::Main { state: Default::default()}
+        Screen::Main
     }
 }
 
@@ -24,7 +24,7 @@ impl Default for Screen {
 struct App {
     playlists: Vec<backend::Playlist>,
     screen: Screen,
-    selected_playlist: usize,
+    main_list_state: ListState,
     exiting: bool,
 }
 
@@ -32,16 +32,41 @@ impl App {
     fn run(&mut self, mut terminal: DefaultTerminal) -> Result<()> {
         loop {
             terminal.draw(|f| f.render_widget(&mut *self, f.area()))?;
+
+            // todo change to poll once background processes are running
             match event::read()? {
+                Event::Key(KeyEvent{
+                               code,
+                               modifiers: _,
+                               kind: KeyEventKind::Press,
+                               state: _ ,
+                           }) => {
+                    self.handle(code)
+                }
                 _ => {},
             }
+
+            if self.exiting {break}
         }
 
-        println!("hello?");
+        Ok(())
     }
 
-    fn render(&self, frame: &mut Frame) {
-        frame.render_widget("hello world", frame.area());
+    fn handle(&mut self, code: KeyCode) {
+        match code {
+            KeyCode::Backspace => {}
+            KeyCode::Enter => {}
+            KeyCode::Left => {}
+            KeyCode::Right => {}
+            KeyCode::Up => {}
+            KeyCode::Down => {}
+            KeyCode::Tab => {}
+            KeyCode::Delete => {}
+            KeyCode::Char('q') => {self.exiting = true}
+            KeyCode::Char(_) => {}
+            KeyCode::Esc => {}
+            x => {dbg!(code);}
+        }
     }
 }
 
@@ -49,7 +74,7 @@ impl Widget for &mut App {
 
     fn render(self, area: Rect, buf: &mut Buffer,) {
         match &mut self.screen {
-            Screen::Main {state} => {
+            Screen::Main => {
                 let block = Block::new()
                     .borders(Borders::ALL)
                     .title("Autofy");
@@ -64,16 +89,16 @@ impl Widget for &mut App {
                     .highlight_symbol(">")
                     .highlight_spacing(HighlightSpacing::Always);
 
-                StatefulWidget::render(list, area, buf, state);
+                StatefulWidget::render(list, area, buf, &mut self.main_list_state);
             }
-            Screen::Editing {selected_source, state} => {}
+            Screen::Editing {source_list_state} => {}
         }
 
 
     }
 }
 
-fn main() -> Result<()> {
+pub fn main() -> Result<()> {
     color_eyre::install()?;
     let terminal = ratatui::init();
     let mut app = App::default();
