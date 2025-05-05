@@ -32,7 +32,8 @@ impl Playlist {
 #[derive(Debug, Clone)]
 pub struct Pipe {
     pub source: Source,
-    pub filters: Vec<Filter>
+    pub filters: Vec<Filter>,
+    pub name: String,
 }
 
 impl Pipe {
@@ -81,11 +82,17 @@ impl Source {
     }
 }
 
+
 #[derive(Debug, Clone)]
 pub enum Filter {
 }
 
 impl Filter {
+
+    pub(crate) fn name(&self) -> &str {
+        todo!()
+    }
+
     fn matches(&self, song: &PlayableId, client: &AuthCodeSpotify) -> bool {
         match self {
             _ => {todo!()}
@@ -191,7 +198,12 @@ pub fn main() -> color_eyre::Result<()> {
         .find(|x| x.as_ref().unwrap().name ==  "My Playlist #2")
         .unwrap()?;
 
-    let sources = vec![Pipe{ source: Source::Playlist(playlist.id.clone()), filters: vec![] }];
+    let sources = vec![
+        Pipe {
+            source: Source::Playlist(playlist.id.clone()),
+            filters: vec![],
+            name: playlist.name
+        }];
 
     let x = dbg!(Playlist {
         name: String::from("it works"),
