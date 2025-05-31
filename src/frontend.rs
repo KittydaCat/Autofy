@@ -163,8 +163,6 @@ impl App {
 
         let mut lists = [const { None }; 3];
 
-
-
         match &self.screen {
             Screen::EditingPlaylists {
                 playlists_list_state: _,
@@ -268,6 +266,83 @@ impl App {
 
     }
 
+    fn get_items2(&self) -> [Option<(ListState, Vec<ListItem>)>;3] {
+
+        // let mut items: [Option<Vec<ListItem>>;3] = [None;3];
+
+        let playlist_items = self.playlists
+            .iter()
+            .map(|x| ListItem::from(x.name.as_str()))
+            .collect::<Vec<ListItem>>();
+
+        let playlist_state = match &self.screen {
+            Screen::EditingPlaylists {playlists_list_state} => {playlists_list_state}
+            Screen::EditingSources {playlists_list_state, .. } => {playlists_list_state}
+            Screen::EditingFilters {playlists_list_state, .. } => {playlists_list_state}
+        };
+
+        let mut source_info  = match &self.screen {
+            Screen::EditingPlaylists { .. } => {None}
+            Screen::EditingSources {source_list_state, .. } |
+            Screen::EditingFilters {source_list_state, .. } => {
+                let selected_playlist = self.playlists.get(playlist_state.selected().unwrap()).unwrap();
+
+                Some(
+                    (
+                        source_list_state,
+                        selected_playlist
+                            .sources
+                            .iter()
+                            .map(|x| ListItem::from(x.name.as_str()))
+                            .collect::<Vec<ListItem>>()
+                    )
+                )
+            }
+        };
+
+        let mut filter_info = if let Screen::EditingFilters {filter_list_state, ..} = &self.screen {
+            let selected_playlist = self.playlists.get(playlist_state.selected().unwrap()).unwrap();
+            let selected_source = selected_playlist.sources.get(
+                source_info.as_ref().unwrap().0.selected().unwrap()
+            ).unwrap();
+
+            Some(
+                (
+                    filter_list_state,
+                    selected_source.filters
+                       .iter()
+                        .map(|x| ListItem::from(x.name()))
+                        .collect::<Vec<ListItem>>(),
+                )
+            )
+        } else {None};
+
+        let mut playlist_info = Some((playlist_state, playlist_items));
+
+        match &self.screen {
+            Screen::EditingPlaylists { .. } => {
+                let add_new = ListItem::new("+add new playlist")
+                    .style(Style::from(Color::Cyan));
+
+                // items[0].as_mut().map(|x| x.push(add_new));
+                playlist_info.as_mut().unwrap().1.push(add_new);
+            }
+            Screen::EditingSources { .. } => {
+                let add_new = ListItem::new("+add new source")
+                    .style(Style::from(Color::Cyan));
+                source_info.as_mut().unwrap().1.push(add_new);
+            }
+            Screen::EditingFilters { .. } => {
+                let add_new = ListItem::new("+add new filter")
+                    .style(Style::from(Color::Cyan));
+                filter_info.as_mut().unwrap().1.push(add_new);
+            }
+        };
+
+        [playlist_info, source_info, filter_info].map(|x| x.map(|(y,z)| (y.clone(),z)))
+
+    }
+
 }
 
 impl Widget for &mut App {
@@ -277,50 +352,7 @@ impl Widget for &mut App {
             .borders(Borders::ALL)
             .title("Autofy");
 
-        let [playlist_list_items, source_list_items, filter_list_items,] = self.get_items();
-
-        match &mut self.screen {
-
-            Screen::EditingPlaylists {
-                playlists_list_state
-            } => {
-
-                let playlist_block = Block::new()
-                    .borders(Borders::ALL)
-                    .title("Playlists");
-
-                let playlist_list = List::new(
-                    playlist_list_items.expect("This should always be supplied with this screen setting")
-                )
-                    .block(playlist_block)
-                    .highlight_symbol(">")
-                    .highlight_spacing(HighlightSpacing::Always);
-
-                StatefulWidget::render(playlist_list, area, buf, playlists_list_state)
-            },
-
-            Screen::EditingSources {
-                playlists_list_state,
-                source_list_state
-            } => {
-                let playlist_block = Block::new()
-                    .borders(Borders::ALL)
-                    .title("Playlists");
-
-                let playlist_list = List::new(
-                    playlist_list_items.expect("This should always be supplied with this screen setting")
-                )
-                    .block(playlist_block)
-                    .highlight_symbol(">")
-                    .highlight_spacing(HighlightSpacing::Always);
-            },
-
-            Screen::EditingFilters {
-                playlists_list_state,
-                source_list_state,
-                filter_list_state
-            } => {},
-        }
+        todo!()
 
 
     }
